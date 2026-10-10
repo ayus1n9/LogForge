@@ -1,13 +1,13 @@
 # Evidence & Artifact Repository
 
-This directory contains log snippets, simulation output traces, and evidence captures from testing the LogForge detection rules.
+This directory contains synthetic and simulated event traces, test fixtures, and raw log payloads used to develop, test, and document the LogForge detection rules.
 
 ## Evidence Catalog
 
-| Evidence File | Description | Associated Detection |
-| :--- | :--- | :--- |
-| `evidence-auth-guessing.json` | Captured event traces for 6 failed logons and subsequent success | Rules `100100`, `100101`, `100103` |
-| `evidence-sysmon-encoded-ps.json`| Raw Sysmon Process Creation event with Base64 payload | Rule `100302` |
-| `evidence-privilege-escalation.json`| Security event log showing membership change to `Administrators` | Rules `100200`, `100202` |
+| Evidence File | Scenario / Use Case | Associated Detection Rules | Type |
+| :--- | :--- | :--- | :--- |
+| [`evidence-auth-guessing.json`](evidence-auth-guessing.json) | 5 failed logons within 22s followed by successful network logon | Rules `100100`, `100101`, `100103` | Synthetic Test Dataset |
+| [`evidence-sysmon-encoded-ps.json`](evidence-sysmon-encoded-ps.json) | Obfuscated PowerShell reverse shell execution and outbound port 4444 socket | Rules `100302`, `100305` | Synthetic Test Dataset |
+| [`evidence-privilege-escalation.json`](evidence-privilege-escalation.json) | Account creation (`4720`) and addition of member to `Administrators` (`4732`) | Rules `100200`, `100202` | Synthetic Test Dataset |
 
-> Note: All evidence captures represent synthetic or benign test simulation data. No real customer credentials, hostnames, private keys, or sensitive IP addresses are committed.
+> **Ethical & Safety Notice**: All evidence payloads are strictly synthetic fixtures or benign simulations. No real customer credentials, hostnames, private keys, or sensitive IP addresses are present.

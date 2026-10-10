@@ -1,8 +1,8 @@
-# Detection Validation & False-Positive Analysis
+# Detection Validation & Qualitative False-Positive Analysis
 
-## 1. Summary of Validation Runs
+## 1. Summary of Validation Strategy
 
-Validation tests were executed against the custom detection pack to assess rule effectiveness, timing thresholds, decoder behavior, and false-positive tendencies.
+Validation for LogForge is conducted through a multi-stage approach combining synthetic unit test assertion (`scripts/log_generator.py`), controlled Windows endpoint script simulation (`scripts/simulate_attacks.ps1`), and qualitative evaluation of common enterprise benign administrative patterns.
 
 ---
 
@@ -33,11 +33,11 @@ Validation tests were executed against the custom detection pack to assess rule 
 
 ---
 
-## 3. Coverage Summary & Engineering Retrospective
+## 3. Qualitative Coverage & Tuning Retrospective
 
-| Detection Pack | Precision Rate | Recall Rate | Primary False Positive Risk | Tuning Applied |
+| Detection Pack | Qualitative Precision | Qualitative Recall | Primary False Positive Risk | Tuning Applied |
 | :--- | :--- | :--- | :--- | :--- |
-| **Authentication** | High (95%) | High (90%) | Outdated cached credentials | Frequency thresholding (5 in 60s) + TargetUserName grouping |
-| **Account Management** | Very High (98%) | Very High (99%) | Legitimate IT onboarding | Filtered for privileged groups (`Administrators`) |
-| **Process Execution** | Medium (80%) | High (95%) | Modern user-space apps (Teams, Zoom) | Monitored paths + suspicious argument matching |
-| **LOLBIN Network** | Very High (99%) | High (90%) | Admin remote troubleshooting | Targeted non-standard high-risk ports (`4444, 8080, 1337`) |
+| **Authentication** | High | High | Outdated cached credentials | Frequency thresholding (5 in 60s) + TargetUserName grouping |
+| **Account Management** | Very High | Very High | Legitimate IT onboarding | Filtered strictly for local privileged groups (`Administrators`) |
+| **Process Execution** | Medium | High | Modern user-space apps (Teams, Zoom) | Monitored paths + suspicious argument matching |
+| **LOLBIN Network** | Very High | High | Admin remote troubleshooting | Targeted non-standard high-risk ports (`4444, 8080, 1337`) |

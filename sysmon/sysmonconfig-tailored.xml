@@ -2,47 +2,42 @@
   <!--
     LogForge Tailored Sysmon Configuration
     Objective: High-fidelity telemetry for SOC lab with minimal noise.
-    Prioritizes:
-      - Event ID 1: Process Creation
-      - Event ID 3: Network Connection
-      - Event ID 7: Image Loaded (Selected DLLs)
-      - Event ID 11: File Creation (User-writable & Startup dirs)
-      - Event ID 22: DNS Query
+    Explicit Rule Groups with defined combining logic:
+      - ProcessCreation: Distinct groups for suspicious CLI, user-dir execution, and shells
+      - NetworkConnection: LOLBINs outbound on non-standard ports
+      - ImageLoaded: Sensitive security DLL injection auditing
+      - RegistryEvent: Run keys and persistence monitoring (Event ID 13)
+      - FileCreation: Executable creation in user directories and startup persistence
+      - DNSQuery: Tunneling and abnormal TLD resolution
   -->
   <HashAlgorithms>md5,sha256</HashAlgorithms>
   <EventFiltering>
 
-    <!-- EVENT ID 1: Process Creation -->
-    <RuleGroup name="ProcessCreation" groupRelation="or">
+    <!-- EVENT ID 1: Process Creation - Group A: Suspicious Command Lines -->
+    <RuleGroup name="ProcessCreation_SuspiciousCLI" groupRelation="or">
       <ProcessCreate onmatch="include">
-        <!-- Suspicious Command Line Interception -->
-        <CommandLine condition="contains any">-EncodedCommand;-enc;iex;Invoke-Expression;DownloadString;Invoke-WebRequest;curl;certutil;bitsadmin;vssadmin;whoami;net user;nltest;mimikatz</CommandLine>
-        <!-- Executions from User-Writable Paths -->
-        <Image condition="begin with">C:\Users\</Image>
-        <Image condition="begin with">C:\ProgramData\</Image>
-        <Image condition="begin with">C:\Windows\Temp\</Image>
-        <!-- Administrative Shells -->
-        <Image condition="end with">powershell.exe</Image>
-        <Image condition="end with">pwsh.exe</Image>
-        <Image condition="end with">cmd.exe</Image>
-        <Image condition="end with">wscript.exe</Image>
-        <Image condition="end with">cscript.exe</Image>
-        <Image condition="end with">mshta.exe</Image>
-        <Image condition="end with">rundll32.exe</Image>
+        <CommandLine condition="contains any">-EncodedCommand;-enc;iex;Invoke-Expression;DownloadString;Invoke-WebRequest;certutil;bitsadmin;vssadmin;nltest;mimikatz</CommandLine>
       </ProcessCreate>
     </RuleGroup>
 
-    <!-- EVENT ID 3: Network Connection -->
-    <RuleGroup name="NetworkConnection" groupRelation="or">
+    <!-- EVENT ID 1: Process Creation - Group B: Executions strictly from User-Writable Paths -->
+    <RuleGroup name="ProcessCreation_UserPaths" groupRelation="or">
+      <ProcessCreate onmatch="include">
+        <Image condition="begin with">C:\Users\</Image>
+        <Image condition="begin with">C:\Windows\Temp\</Image>
+        <Image condition="begin with">C:\ProgramData\</Image>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- EVENT ID 3: Network Connection - LOLBINs connecting outbound to non-standard ports -->
+    <RuleGroup name="NetworkConnection_LOLBIN" groupRelation="and">
       <NetworkConnect onmatch="include">
-        <!-- Living off the Land Binaries connecting outbound -->
         <Image condition="end with">powershell.exe</Image>
-        <Image condition="end with">cmd.exe</Image>
-        <Image condition="end with">certutil.exe</Image>
-        <Image condition="end with">bitsadmin.exe</Image>
-        <Image condition="end with">rundll32.exe</Image>
-        <Image condition="end with">mshta.exe</Image>
-        <!-- Outbound non-standard ports -->
+        <DestinationPort condition="is">4444</DestinationPort>
+      </NetworkConnect>
+    </RuleGroup>
+    <RuleGroup name="NetworkConnection_HighRiskPorts" groupRelation="or">
+      <NetworkConnect onmatch="include">
         <DestinationPort condition="is">4444</DestinationPort>
         <DestinationPort condition="is">8080</DestinationPort>
         <DestinationPort condition="is">8443</DestinationPort>
@@ -51,33 +46,40 @@
     </RuleGroup>
 
     <!-- EVENT ID 7: Image Loaded (DLLs) -->
-    <RuleGroup name="ImageLoaded" groupRelation="or">
+    <RuleGroup name="ImageLoaded_SensitiveDLLs" groupRelation="or">
       <ImageLoad onmatch="include">
-        <!-- Flag injection/monitoring into sensitive DLLs -->
         <ImageLoaded condition="end with">amsi.dll</ImageLoaded>
         <ImageLoaded condition="end with">samlib.dll</ImageLoaded>
         <ImageLoaded condition="end with">vaultcli.dll</ImageLoaded>
       </ImageLoad>
     </RuleGroup>
 
-    <!-- EVENT ID 11: File Creation -->
-    <RuleGroup name="FileCreation" groupRelation="or">
+    <!-- EVENT ID 13: Registry Event (Value Set) - Persistence Audit -->
+    <RuleGroup name="RegistryEvent_Persistence" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <TargetObject condition="contains">\CurrentVersion\Run</TargetObject>
+        <TargetObject condition="contains">\CurrentVersion\RunOnce</TargetObject>
+        <TargetObject condition="contains">\CurrentVersion\Winlogon</TargetObject>
+      </RegistryEvent>
+    </RuleGroup>
+
+    <!-- EVENT ID 11: File Creation - Executable creation in user directories -->
+    <RuleGroup name="FileCreation_UserDirs" groupRelation="and">
       <FileCreate onmatch="include">
-        <!-- Executable creation in user directories -->
         <TargetFilename condition="begin with">C:\Users\</TargetFilename>
         <TargetFilename condition="end with">.exe</TargetFilename>
-        <TargetFilename condition="end with">.bat</TargetFilename>
-        <TargetFilename condition="end with">.ps1</TargetFilename>
-        <TargetFilename condition="end with">.vbs</TargetFilename>
-        <!-- Startup folder persistence -->
+      </FileCreate>
+    </RuleGroup>
+    <!-- EVENT ID 11: File Creation - Startup folder persistence -->
+    <RuleGroup name="FileCreation_Startup" groupRelation="or">
+      <FileCreate onmatch="include">
         <TargetFilename condition="contains">\Start Menu\Programs\Startup\</TargetFilename>
       </FileCreate>
     </RuleGroup>
 
     <!-- EVENT ID 22: DNS Query -->
-    <RuleGroup name="DNSQuery" groupRelation="or">
+    <RuleGroup name="DNSQuery_Suspicious" groupRelation="or">
       <DnsQuery onmatch="include">
-        <!-- Suspicious TLD queries or raw dynamic DNS -->
         <QueryName condition="end with">.xyz</QueryName>
         <QueryName condition="end with">.top</QueryName>
         <QueryName condition="end with">.tk</QueryName>

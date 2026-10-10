@@ -1,0 +1,41 @@
+{
+  "scenario": "Simulated Privilege Escalation - Member Added to Administrators (Synthetic Test Dataset)",
+  "dataset_type": "Synthetic lab simulation artifact",
+  "host": "WIN-LAB-EP01",
+  "ip": "192.168.56.101",
+  "events": [
+    {
+      "timestamp": "2026-10-10T10:50:12.100Z",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "event_id": 4720,
+      "event_data": {
+        "TargetUserName": "backdoor_admin",
+        "SubjectUserName": "Administrator",
+        "SubjectDomainName": "WIN-LAB-EP01"
+      },
+      "rule_fired": {
+        "id": "100200",
+        "level": 8,
+        "description": "LogForge: New local user account created (backdoor_admin) by Administrator",
+        "mitre_id": "T1136.001"
+      }
+    },
+    {
+      "timestamp": "2026-10-10T10:50:18.450Z",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "event_id": 4732,
+      "event_data": {
+        "TargetUserName": "Administrators",
+        "MemberName": "-",
+        "MemberSid": "S-1-5-21-382910394-1928472910-291029384-1004",
+        "SubjectUserName": "Administrator"
+      },
+      "rule_fired": {
+        "id": "100202",
+        "level": 11,
+        "description": "LogForge CRITICAL: Member (S-1-5-21-...) added to privileged local group Administrators by Administrator",
+        "mitre_id": "T1098, T1078.003"
+      }
+    }
+  ]
+}

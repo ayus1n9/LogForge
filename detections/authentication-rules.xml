@@ -3,21 +3,30 @@
   MITRE ATT&CK:
     - T1110.001 (Password Guessing)
     - T1110.003 (Password Spraying)
+    - T1078 (Valid Accounts)
+
+  Wazuh Windows Ruleset Hierarchy Note:
+    - 60100: Base Windows event channel
+    - 60104: Windows audit failure event
+    - 60105: Windows logon failure (Event ID 4625 / 529-539)
+    - 60106: Windows logon success (Event ID 4624 / 528, 540)
 -->
 <group name="windows,windows_security,logforge_auth,">
 
-  <!-- Base rule for Single Failed Logon (Windows Event ID 4625) -->
+  <!-- Custom Rule for Single Failed Logon (Windows Event ID 4625) -->
+  <!-- Inherits from Wazuh default rule 60105 (Windows logon failure) -->
   <rule id="100100" level="3">
-    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <if_sid>60105</if_sid>
     <field name="win.system.eventID">^4625$</field>
     <description>LogForge: Windows user failed logon attempt (Event ID 4625)</description>
     <mitre>
       <id>T1110</id>
     </mitre>
+    <group>authentication_failed,</group>
   </rule>
 
   <!-- Correlated Repeated Failed Logons (Brute Force / Password Guessing) -->
-  <!-- Fires when 5 failures occur for the same target user or from the same source within 60 seconds -->
+  <!-- Fires when 5 failures occur for the same target user within 60 seconds -->
   <rule id="100101" level="10" frequency="5" timeframe="60">
     <if_matched_sid>100100</if_matched_sid>
     <same_field>win.eventdata.targetUserName</same_field>
@@ -29,20 +38,26 @@
   </rule>
 
   <!-- Single Successful Logon (Windows Event ID 4624) -->
+  <!-- Inherits from Wazuh default rule 60106 (Windows logon success) -->
   <rule id="100102" level="3">
-    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <if_sid>60106</if_sid>
     <field name="win.system.eventID">^4624$</field>
     <description>LogForge: Windows user successful logon (Event ID 4624)</description>
     <mitre>
       <id>T1078</id>
     </mitre>
+    <group>authentication_success,</group>
   </rule>
 
   <!-- High-Risk Correlation: Successful Logon immediately following Repeated Failed Logons -->
-  <!-- Indicates an adversary successfully guessed the password or compromised the account -->
+  <!--
+    Evaluated when current event is a Successful Logon (if_sid 100102)
+    and Repeated Failures occurred within the last 120 seconds (if_matched_sid 100101)
+    for the same user account (same_field win.eventdata.targetUserName).
+  -->
   <rule id="100103" level="12" timeframe="120">
-    <if_matched_sid>100102</if_matched_sid>
-    <if_sid>100101</if_sid>
+    <if_sid>100102</if_sid>
+    <if_matched_sid>100101</if_matched_sid>
     <same_field>win.eventdata.targetUserName</same_field>
     <description>LogForge CRITICAL: Successful authentication following repeated failed attempts for $(win.eventdata.targetUserName) - Potential account compromise</description>
     <mitre>
