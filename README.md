@@ -145,10 +145,13 @@ LogForge/
 │   └── suspicious-process/
 │       └── incident-report.md              # Incident Report 2: Encoded PowerShell & reverse shell
 ├── evidence/
-│   └── README.md                           # Evidence catalog and synthetic sample logs
+│   ├── README.md                           # Evidence catalog and methodology
+│   ├── evidence-auth-guessing.json         # 5 failed logons & compromise trace
+│   ├── evidence-privilege-escalation.json  # User creation & Administrators group addition trace
+│   └── evidence-sysmon-encoded-ps.json     # Encoded reverse shell & socket trace
 └── scripts/
-    ├── simulate_attacks.ps1                # PowerShell adversary simulation tool
-    └── log_generator.py                    # Synthetic log replayer for wazuh-logtest
+    ├── simulate_attacks.ps1                # Hardened PowerShell adversary simulation tool
+    └── log_generator.py                    # Automated detection test harness & log replayer
 ```
 
 ---
