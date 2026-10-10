@@ -1,0 +1,42 @@
+# Operating System
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Virtualization & Lab artifacts
+*.vmdk
+*.vmem
+*.iso
+*.ova
+*.box
+.vagrant/
+
+# Sensitive Data / Secrets / Credentials
+*.pem
+*.key
+*.pfx
+*.cer
+*.crt
+*.ovpn
+secrets.env
+.env
+*.token
+creds/
+credentials/
+auth/
+
+# Wazuh runtime & logs
+wazuh_data/
+wazuh_logs/
+*.log
+*.sqlite
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/

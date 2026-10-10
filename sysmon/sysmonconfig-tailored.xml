@@ -1,0 +1,89 @@
+<Sysmon schemaversion="4.90">
+  <!--
+    LogForge Tailored Sysmon Configuration
+    Objective: High-fidelity telemetry for SOC lab with minimal noise.
+    Prioritizes:
+      - Event ID 1: Process Creation
+      - Event ID 3: Network Connection
+      - Event ID 7: Image Loaded (Selected DLLs)
+      - Event ID 11: File Creation (User-writable & Startup dirs)
+      - Event ID 22: DNS Query
+  -->
+  <HashAlgorithms>md5,sha256</HashAlgorithms>
+  <EventFiltering>
+
+    <!-- EVENT ID 1: Process Creation -->
+    <RuleGroup name="ProcessCreation" groupRelation="or">
+      <ProcessCreate onmatch="include">
+        <!-- Suspicious Command Line Interception -->
+        <CommandLine condition="contains any">-EncodedCommand;-enc;iex;Invoke-Expression;DownloadString;Invoke-WebRequest;curl;certutil;bitsadmin;vssadmin;whoami;net user;nltest;mimikatz</CommandLine>
+        <!-- Executions from User-Writable Paths -->
+        <Image condition="begin with">C:\Users\</Image>
+        <Image condition="begin with">C:\ProgramData\</Image>
+        <Image condition="begin with">C:\Windows\Temp\</Image>
+        <!-- Administrative Shells -->
+        <Image condition="end with">powershell.exe</Image>
+        <Image condition="end with">pwsh.exe</Image>
+        <Image condition="end with">cmd.exe</Image>
+        <Image condition="end with">wscript.exe</Image>
+        <Image condition="end with">cscript.exe</Image>
+        <Image condition="end with">mshta.exe</Image>
+        <Image condition="end with">rundll32.exe</Image>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- EVENT ID 3: Network Connection -->
+    <RuleGroup name="NetworkConnection" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <!-- Living off the Land Binaries connecting outbound -->
+        <Image condition="end with">powershell.exe</Image>
+        <Image condition="end with">cmd.exe</Image>
+        <Image condition="end with">certutil.exe</Image>
+        <Image condition="end with">bitsadmin.exe</Image>
+        <Image condition="end with">rundll32.exe</Image>
+        <Image condition="end with">mshta.exe</Image>
+        <!-- Outbound non-standard ports -->
+        <DestinationPort condition="is">4444</DestinationPort>
+        <DestinationPort condition="is">8080</DestinationPort>
+        <DestinationPort condition="is">8443</DestinationPort>
+        <DestinationPort condition="is">1337</DestinationPort>
+      </NetworkConnect>
+    </RuleGroup>
+
+    <!-- EVENT ID 7: Image Loaded (DLLs) -->
+    <RuleGroup name="ImageLoaded" groupRelation="or">
+      <ImageLoad onmatch="include">
+        <!-- Flag injection/monitoring into sensitive DLLs -->
+        <ImageLoaded condition="end with">amsi.dll</ImageLoaded>
+        <ImageLoaded condition="end with">samlib.dll</ImageLoaded>
+        <ImageLoaded condition="end with">vaultcli.dll</ImageLoaded>
+      </ImageLoad>
+    </RuleGroup>
+
+    <!-- EVENT ID 11: File Creation -->
+    <RuleGroup name="FileCreation" groupRelation="or">
+      <FileCreate onmatch="include">
+        <!-- Executable creation in user directories -->
+        <TargetFilename condition="begin with">C:\Users\</TargetFilename>
+        <TargetFilename condition="end with">.exe</TargetFilename>
+        <TargetFilename condition="end with">.bat</TargetFilename>
+        <TargetFilename condition="end with">.ps1</TargetFilename>
+        <TargetFilename condition="end with">.vbs</TargetFilename>
+        <!-- Startup folder persistence -->
+        <TargetFilename condition="contains">\Start Menu\Programs\Startup\</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- EVENT ID 22: DNS Query -->
+    <RuleGroup name="DNSQuery" groupRelation="or">
+      <DnsQuery onmatch="include">
+        <!-- Suspicious TLD queries or raw dynamic DNS -->
+        <QueryName condition="end with">.xyz</QueryName>
+        <QueryName condition="end with">.top</QueryName>
+        <QueryName condition="end with">.tk</QueryName>
+        <QueryName condition="contains">ngrok</QueryName>
+      </DnsQuery>
+    </RuleGroup>
+
+  </EventFiltering>
+</Sysmon>

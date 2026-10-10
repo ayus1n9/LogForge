@@ -1,0 +1,75 @@
+<!--
+  LogForge Detection Rules Pack: Process & Network Telemetry
+  MITRE ATT&CK:
+    - T1059.001 (PowerShell Execution)
+    - T1027 (Obfuscated Files or Information: Encoded Command)
+    - T1204.002 (Malicious File: Execution from User Directories)
+    - T1071.001 (Application Layer Protocol: Web Protocols)
+    - T1049 (System Network Connections Discovery)
+-->
+<group name="windows,sysmon,sysmon_process,logforge_process,">
+
+  <!-- Sysmon Event ID 1: Process Creation Base Rule -->
+  <rule id="100300" level="3">
+    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <field name="win.system.eventID">^1$</field>
+    <description>LogForge: Sysmon Process Creation (Event ID 1)</description>
+  </rule>
+
+  <!-- Suspicious PowerShell Command-Line Execution (Execution / Defense Evasion) -->
+  <rule id="100301" level="8">
+    <if_sid>100300</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)powershell\.exe|pwsh\.exe</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)-nop|-noprofile|bypass|-exec\s+bypass|iex|Invoke-Expression|DownloadString|Invoke-WebRequest</field>
+    <description>LogForge: Suspicious PowerShell execution with download/bypass cradle syntax</description>
+    <mitre>
+      <id>T1059.001</id>
+    </mitre>
+    <group>execution,powershell,</group>
+  </rule>
+
+  <!-- Encoded PowerShell Arguments (Defense Evasion) -->
+  <rule id="100302" level="9">
+    <if_sid>100300</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)powershell\.exe|pwsh\.exe</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)-e\s+|-enc\s+|-encodedcommand\s+</field>
+    <description>LogForge: PowerShell executed with Base64 encoded command arguments (-EncodedCommand)</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1027</id>
+    </mitre>
+    <group>execution,defense_evasion,</group>
+  </rule>
+
+  <!-- Executable Launched from User-Writable Directories (AppData, Temp, Downloads) -->
+  <rule id="100303" level="8">
+    <if_sid>100300</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)C:\\(Users\\[^\\]+\\(AppData|Downloads|Desktop)|Windows\\Temp|ProgramData)\\[^\\]+\.exe</field>
+    <description>LogForge: Binary execution originating from user-writable or temporary directory</description>
+    <mitre>
+      <id>T1204.002</id>
+    </mitre>
+    <group>execution,persistence,</group>
+  </rule>
+
+  <!-- Sysmon Event ID 3: Network Connection Base Rule -->
+  <rule id="100304" level="3">
+    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <field name="win.system.eventID">^3$</field>
+    <description>LogForge: Sysmon Network Connection (Event ID 3)</description>
+  </rule>
+
+  <!-- Suspicious Outbound Connection from Living off the Land Binaries -->
+  <rule id="100305" level="10">
+    <if_sid>100304</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)powershell\.exe|cmd\.exe|certutil\.exe|bitsadmin\.exe|rundll32\.exe|mshta\.exe</field>
+    <field name="win.eventdata.destinationPort" type="pcre2">^(?:4444|8080|8443|1337|9001|4445)$</field>
+    <description>LogForge HIGH: Suspicious LOLBIN ($(win.eventdata.image)) established outbound connection on non-standard port $(win.eventdata.destinationPort)</description>
+    <mitre>
+      <id>T1071.001</id>
+      <id>T1059.001</id>
+    </mitre>
+    <group>command_and_control,lolbin,</group>
+  </rule>
+
+</group>

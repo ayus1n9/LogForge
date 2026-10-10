@@ -1,0 +1,55 @@
+<!--
+  LogForge Detection Rules Pack: Authentication & Password Guessing
+  MITRE ATT&CK:
+    - T1110.001 (Password Guessing)
+    - T1110.003 (Password Spraying)
+-->
+<group name="windows,windows_security,logforge_auth,">
+
+  <!-- Base rule for Single Failed Logon (Windows Event ID 4625) -->
+  <rule id="100100" level="3">
+    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <field name="win.system.eventID">^4625$</field>
+    <description>LogForge: Windows user failed logon attempt (Event ID 4625)</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <!-- Correlated Repeated Failed Logons (Brute Force / Password Guessing) -->
+  <!-- Fires when 5 failures occur for the same target user or from the same source within 60 seconds -->
+  <rule id="100101" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100100</if_matched_sid>
+    <same_field>win.eventdata.targetUserName</same_field>
+    <description>LogForge: Potential password guessing / brute-force attack detected (5+ failed logons within 60s for $(win.eventdata.targetUserName))</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+    <group>authentication_failures,pci_dss_10.2.4,pci_dss_10.2.5,gdpr_IV_35.7.d,</group>
+  </rule>
+
+  <!-- Single Successful Logon (Windows Event ID 4624) -->
+  <rule id="100102" level="3">
+    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <field name="win.system.eventID">^4624$</field>
+    <description>LogForge: Windows user successful logon (Event ID 4624)</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+
+  <!-- High-Risk Correlation: Successful Logon immediately following Repeated Failed Logons -->
+  <!-- Indicates an adversary successfully guessed the password or compromised the account -->
+  <rule id="100103" level="12" timeframe="120">
+    <if_matched_sid>100102</if_matched_sid>
+    <if_sid>100101</if_sid>
+    <same_field>win.eventdata.targetUserName</same_field>
+    <description>LogForge CRITICAL: Successful authentication following repeated failed attempts for $(win.eventdata.targetUserName) - Potential account compromise</description>
+    <mitre>
+      <id>T1110.001</id>
+      <id>T1078</id>
+    </mitre>
+    <group>authentication_success,account_compromise,</group>
+  </rule>
+
+</group>

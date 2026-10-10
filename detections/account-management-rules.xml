@@ -1,0 +1,53 @@
+<!--
+  LogForge Detection Rules Pack: Account Management & Privilege Escalation
+  MITRE ATT&CK:
+    - T1136.001 (Create Account: Local Account)
+    - T1098 (Account Manipulation)
+    - T1078.003 (Valid Accounts: Local Accounts)
+-->
+<group name="windows,windows_security,logforge_account_mgmt,">
+
+  <!-- Base: New Local User Created (Windows Event ID 4720) -->
+  <rule id="100200" level="8">
+    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <field name="win.system.eventID">^4720$</field>
+    <description>LogForge: New local user account created ($(win.eventdata.targetUserName)) by $(win.eventdata.subjectUserName)</description>
+    <mitre>
+      <id>T1136.001</id>
+    </mitre>
+    <group>account_creation,persistence,</group>
+  </rule>
+
+  <!-- Member Added to Security-Enabled Local Group (Windows Event ID 4732) -->
+  <rule id="100201" level="6">
+    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <field name="win.system.eventID">^4732$</field>
+    <description>LogForge: A user was added to a local security group ($(win.eventdata.targetUserName))</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+  </rule>
+
+  <!-- High-Severity: User added to Privileged Local Group (Administrators / Remote Desktop Users) -->
+  <rule id="100202" level="11">
+    <if_sid>100201</if_sid>
+    <field name="win.eventdata.targetUserName" type="pcre2">(?i)Administrators|Remote Desktop Users|Backup Operators|Domain Admins</field>
+    <description>LogForge CRITICAL: User added to highly privileged group ($(win.eventdata.targetUserName)) by $(win.eventdata.subjectUserName)</description>
+    <mitre>
+      <id>T1098</id>
+      <id>T1078.003</id>
+    </mitre>
+    <group>privilege_escalation,persistence,</group>
+  </rule>
+
+  <!-- Account Enabled (Windows Event ID 4722) or Password Reset (Windows Event ID 4724) -->
+  <rule id="100203" level="7">
+    <if_sid>60100,60101,60102,60103,18100</if_sid>
+    <field name="win.system.eventID">^4724$</field>
+    <description>LogForge: Password reset attempted for user ($(win.eventdata.targetUserName)) by $(win.eventdata.subjectUserName)</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+  </rule>
+
+</group>
